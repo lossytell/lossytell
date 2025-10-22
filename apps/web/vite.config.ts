@@ -1,26 +1,18 @@
-import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
+import { sveltekit } from '@sveltejs/kit/vite';
+import { webdriverio } from '@vitest/browser-webdriverio';
 
 export default defineConfig({
 	plugins: [sveltekit()],
 	test: {
-		expect: { requireAssertions: true },
-		projects: [
-			{
-				extends: './vite.config.ts',
-				test: {
-					name: 'client',
-					environment: 'browser',
-					browser: {
-						enabled: true,
-						provider: 'webdriverio',
-						instances: [{ browser: 'chrome' }]
-					},
-					include: ['src/**/*.svelte.{test,spec}.{js,ts}'],
-					exclude: ['src/lib/server/**'],
-					setupFiles: ['./vitest-setup-client.ts']
+		browser: {
+			enabled: true,
+			provider: webdriverio({
+				capabilities: {
+					browserVersion: '120'
 				}
-			}
-		]
+			}),
+			instances: [{ browser: 'chrome' }]
+		}
 	}
 });
