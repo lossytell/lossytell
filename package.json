@@ -6,15 +6,12 @@
 	"engines": {
 		"node": ">=24"
 	},
-	"workspaces": [
-		"apps/*"
-	],
 	"scripts": {
-		"build": "bun --filter '*' build",
-		"check": "bun --filter '*' check",
-		"test": "bun --filter '*' test",
+		"build": "pnpm -r build",
+		"check": "pnpm -r check",
+		"test": "pnpm -r test",
 		"format": "prettier --write .",
-		"lint": "bun --filter '*' lint"
+		"lint": "pnpm -r lint"
 	},
 	"devDependencies": {
 		"prettier": "^3.6.2",
