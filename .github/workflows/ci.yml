@@ -6,6 +6,9 @@ on:
 permissions:
   contents: read
 
+env:
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -21,10 +24,8 @@ jobs:
         with:
           node-version-file: package.json
           cache: pnpm
-      - uses: browser-actions/setup-chrome@v1
-        with:
-          chrome-version: 120
       - run: pnpm install --frozen-lockfile
+      - run: pnpm playwright install chromium
       - run: pnpm check
       - run: pnpm test
       - run: pnpm lint
