@@ -109,7 +109,7 @@
 {#snippet renderQuality(data: unknown)}
 	{#if typeof data === 'object' && data !== null && !Array.isArray(data)}
 		<div class="quality-analysis">
-			{#each Object.entries(data) as [key, value]}
+			{#each Object.entries(data) as [key, value] (key)}
 				<div class="quality-item">
 					<strong>{key}:</strong> <span>{value}</span>
 				</div>

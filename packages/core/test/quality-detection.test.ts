@@ -121,12 +121,4 @@ describe('Upscaled/Fake Files - FFT Required', () => {
 			note: 'Will be detected via FFT frequency analysis (future)'
 		}
 	];
-
-	it.skip.each(fakeCases)('$name - $note', async ({ url }) => {
-		const file = await fetchAudioFile(url);
-		const result = await analyzeAudioQuality(file);
-
-		// These tests will pass once real FFT is implemented
-		expect(result.isUpscaled).toBe(true);
-	});
 });
