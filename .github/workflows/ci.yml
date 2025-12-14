@@ -6,6 +6,9 @@ on:
 permissions:
   contents: read
 
+env:
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -16,9 +19,14 @@ jobs:
     timeout-minutes: 2
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
-      - run: bun run check
-      - run: bun run test
-      - run: bun run lint
-      - run: bun run build
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm playwright install chromium
+      - run: pnpm check
+      - run: pnpm test
+      - run: pnpm lint
+      - run: pnpm build

@@ -1,23 +1,22 @@
 {
 	"name": "lossytell-monorepo",
-	"version": "0.0.0",
+	"version": "0.0.1",
 	"private": true,
 	"type": "module",
 	"engines": {
 		"node": ">=24"
 	},
-	"workspaces": [
-		"apps/*"
-	],
+	"packageManager": "pnpm@10.25.0+sha512.5e82639027af37cf832061bcc6d639c219634488e0f2baebe785028a793de7b525ffcd3f7ff574f5e9860654e098fe852ba8ac5dd5cefe1767d23a020a92f501",
 	"scripts": {
-		"build": "bun --filter '*' build",
-		"check": "bun --filter '*' check",
-		"test": "bun --filter '*' test",
+		"build": "pnpm -r build",
+		"check": "pnpm -r check",
+		"test": "pnpm -r test",
 		"format": "prettier --write .",
-		"lint": "bun --filter '*' lint"
+		"lint": "pnpm -r lint"
 	},
 	"devDependencies": {
-		"prettier": "^3.6.2",
-		"prettier-plugin-svelte": "^3.4.0"
+		"playwright": "^1.57.0",
+		"prettier": "3.7.4",
+		"prettier-plugin-svelte": "3.4.0"
 	}
 }

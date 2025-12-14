@@ -1,0 +1,12 @@
+packages:
+  - apps/*
+  - packages/*
+
+ignoredBuiltDependencies:
+  - edgedriver
+  - esbuild
+  - geckodriver
+
+strictDepBuilds: true
+
+verifyDepsBeforeRun: install
