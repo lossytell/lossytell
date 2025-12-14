@@ -1,6 +1,4 @@
 <script lang="ts">
-	import favicon from '$lib/assets/favicon.svg';
-
 	let { children } = $props();
 	let isDragging = $state(false);
 
@@ -28,10 +26,6 @@
 	}
 </script>
 
-<svelte:head>
-	<link rel="icon" href={favicon} />
-</svelte:head>
-
 <svelte:body
 	ondragenter={handleDragEnter}
 	ondragover={handleDragOver}
@@ -43,12 +37,7 @@
 	<nav>
 		<menu>
 			<li>
-				<a href="/about">About</a>
-			</li>
-			<li>
-				<a href="https://github.com/lossytell/lossytell" target="_blank" rel="noopener noreferrer"
-					>GitHub</a
-				>
+				<a href="https://github.com/lossytell/lossytell" target="_blank" rel="noopener noreferrer">GitHub</a>
 			</li>
 		</menu>
 	</nav>

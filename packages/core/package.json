@@ -1,0 +1,23 @@
+{
+	"name": "@lossytell/core",
+	"version": "0.0.1",
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"check": "tsc --noEmit",
+		"test": "vitest"
+	},
+	"dependencies": {
+		"fft.js": "^4.0.4",
+		"mediabunny": "^1.26.0"
+	},
+	"devDependencies": {
+		"@types/node": "^25.0.2",
+		"@vitest/browser-playwright": "^4.0.15",
+		"playwright": "^1.48.0",
+		"typescript": "^5.9.3",
+		"vitest": "^4.0.15"
+	}
+}

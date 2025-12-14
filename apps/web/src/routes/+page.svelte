@@ -1,127 +1,217 @@
 <script lang="ts">
-	let { isDragging } = $props();
-	let uploadedFiles: Array<{
-		file: File;
-		addedAt: Date;
-		path: string;
-	}> = [];
+	import { analyzeAudioQuality } from '@lossytell/core';
 
-	// async function getAllFileEntries(dataTransferItemList: DataTransferItemList) {
-	// 	const fileEntries = [];
-	// 	const queue = [];
-
-	// 	for (let i = 0; i < dataTransferItemList.length; i++) {
-	// 		queue.push(dataTransferItemList[i].webkitGetAsEntry());
-	// 	}
-
-	// 	while (queue.length > 0) {
-	// 		const entry = queue.shift();
-	// 		if (entry?.isFile) {
-	// 			fileEntries.push(entry);
-	// 		} else if (entry?.isDirectory) {
-	// 			const reader = entry.createReader();
-	// 			const entries = await new Promise<FileSystemEntry[]>((resolve) => {
-	// 				reader.readEntries((entries) => resolve(entries));
-	// 			});
-	// 			queue.push(...entries);
-	// 		}
-	// 	}
-
-	// 	return fileEntries;
-	// }
-
-	// async function processFileEntries(entries: FileSystemEntry[]) {
-	// 	for (const entry of entries) {
-	// 		if (entry.isFile) {
-	// 			const fileEntry = entry as FileSystemFileEntry;
-	// 			const file = await new Promise<File>((resolve) => {
-	// 				fileEntry.file((file) => resolve(file));
-	// 			});
-
-	// 			if (file.type.startsWith('audio/') || file.name.match(/\.(mp3|wav|ogg|m4a|flac)$/i)) {
-	// 				addFile(file, entry.fullPath);
-	// 			}
-	// 		}
-	// 	}
-	// }
-
-	function addFile(file: File, path: string = file.name) {
-		uploadedFiles = [
-			...uploadedFiles,
-			{
-				file,
-				addedAt: new Date(),
-				path: path.startsWith('/') ? path.slice(1) : path
-			}
-		];
+	interface QualityData {
+		[key: string]: unknown;
 	}
 
-	function handleFiles(files: FileList | File[]) {
-		for (const file of files) {
-			if (file.type.startsWith('audio/') || file.name.match(/\.(mp3|wav|ogg|m4a|flac)$/i)) {
-				addFile(file);
+	interface FileAnalysis {
+		name: string;
+		quality: QualityData;
+		loading: boolean;
+	}
+
+	let fileAnalysis: FileAnalysis[] = $state([]);
+	let isDragging = $state(false);
+
+	async function analyzeFile(file: File): Promise<QualityData> {
+		const result = await analyzeAudioQuality(file);
+
+		return {
+			'Quality Tier': result.tier,
+			Confidence: `${(result.confidence * 100).toFixed(1)}%`,
+			'Detected Cutoff Frequency': result.detectedCutoffFrequency
+				? `${result.detectedCutoffFrequency.toFixed(0)} Hz`
+				: 'Unknown',
+			Bitrate: result.bitrate,
+			Codec: result.codec,
+			'Sample Rate': `${result.metadata.sampleRate} Hz`,
+			Duration: `${result.metadata.duration.toFixed(2)} seconds`,
+			Format: result.metadata.format
+		};
+	}
+
+	function handleDrop(event: DragEvent) {
+		event.preventDefault();
+		isDragging = false;
+
+		const files = event.dataTransfer?.files;
+		if (files) {
+			for (let i = 0; i < files.length; i++) {
+				const file = files[i];
+				if (!file) continue;
+
+				const item: FileAnalysis = {
+					name: file.name,
+					quality: {},
+					loading: true
+				};
+				const itemIndex = fileAnalysis.length;
+				fileAnalysis.push(item);
+
+				analyzeFile(file)
+					.then((quality) => {
+						if (fileAnalysis[itemIndex]) {
+							fileAnalysis[itemIndex]!.quality = quality;
+							fileAnalysis[itemIndex]!.loading = false;
+						}
+					})
+					.catch((error) => {
+						console.error('Error analyzing audio:', error);
+						if (fileAnalysis[itemIndex]) {
+							fileAnalysis[itemIndex]!.quality = { error: error.message };
+							fileAnalysis[itemIndex]!.loading = false;
+						}
+					});
 			}
 		}
 	}
 
-	function handleFileInput(event: Event) {
-		const input = event.target as HTMLInputElement;
-		if (input.files) {
-			handleFiles(input.files);
-		}
+	function handleDragOver(event: DragEvent) {
+		event.preventDefault();
+		event.dataTransfer!.dropEffect = 'copy';
+		isDragging = true;
+	}
+
+	function handleDragLeave() {
+		isDragging = false;
 	}
 </script>
 
-<main>
-	<h1>lossytell</h1>
+<div class="container">
+	<div
+		class="dropzone"
+		class:dragging={isDragging}
+		ondrop={handleDrop}
+		ondragover={handleDragOver}
+		ondragleave={handleDragLeave}
+		role="button"
+		tabindex="0"
+	>
+		<p>Drag & drop media files here to extract metadata</p>
+		<p class="supported-formats">Supported: MP4, MOV, MKV, WebM, Ogg, MP3, WAV, AAC, FLAC</p>
+	</div>
 
-	<section aria-label="File Upload" class="upload-section">
-		<div class="dropzone" role="button" tabindex="0">
-			<label for="audioInput">Drag & drop audio files here or click to select</label>
-			<input
-				id="audioInput"
-				type="file"
-				accept="audio/*"
-				webkitdirectory
-				multiple
-				onchange={handleFileInput}
-			/>
+	<div class="results">
+		{#each fileAnalysis as item (item.name)}
+			<div class="file-result">
+				<h3>{item.name}</h3>
+				{#if item.loading}
+					<p class="loading">Analyzing audio quality...</p>
+				{:else}
+					{@render renderQuality(item.quality)}
+				{/if}
+			</div>
+		{/each}
+	</div>
+</div>
+
+{#snippet renderQuality(data: unknown)}
+	{#if typeof data === 'object' && data !== null && !Array.isArray(data)}
+		<div class="quality-analysis">
+			{#each Object.entries(data) as [key, value]}
+				<div class="quality-item">
+					<strong>{key}:</strong> <span>{value}</span>
+				</div>
+			{/each}
 		</div>
-	</section>
-</main>
+	{:else}
+		<p>Error analyzing file</p>
+	{/if}
+{/snippet}
 
 <style>
-	main {
+	.container {
 		display: flex;
 		flex-direction: column;
-		flex-wrap: nowrap;
 		align-items: center;
-
-		margin-block-start: 3rem;
-	}
-
-	.upload-section {
-		position: relative;
-		z-index: 1;
+		padding: 2rem;
+		max-width: 900px;
+		margin: 0 auto;
 	}
 
 	.dropzone {
-		padding: 2rem;
-		border: 2px dashed #ccc;
-		border-radius: 4px;
+		width: 100%;
+		padding: 3rem 2rem;
+		border: 2px dashed #999;
+		border-radius: 8px;
 		text-align: center;
 		cursor: pointer;
 		transition: all 0.2s ease;
-		margin: 2rem auto;
-		max-width: 600px;
+		margin-bottom: 2rem;
+		background-color: #f9f9f9;
 	}
 
-	.dropzone input {
-		display: none;
+	.dropzone:hover {
+		border-color: #666;
+		background-color: #f0f0f0;
 	}
 
-	.dropzone label {
-		display: block;
-		cursor: pointer;
+	.dropzone.dragging {
+		border-color: #0066cc;
+		background-color: #e6f2ff;
+		border-width: 2px;
+	}
+
+	.dropzone p {
+		margin: 0;
+		color: #666;
+		font-size: 16px;
+	}
+
+	.supported-formats {
+		margin-top: 0.5rem !important;
+		font-size: 12px !important;
+		color: #999 !important;
+	}
+
+	.results {
+		width: 100%;
+	}
+
+	.file-result {
+		margin-bottom: 2rem;
+		padding: 1rem;
+		border: 1px solid #ddd;
+		border-radius: 4px;
+		background-color: #fff;
+	}
+
+	.file-result h3 {
+		margin: 0 0 1rem 0;
+		color: #333;
+		font-size: 18px;
+	}
+
+	.loading {
+		color: #999;
+		font-style: italic;
+	}
+
+	.quality-analysis {
+		display: grid;
+		gap: 0.75rem;
+	}
+
+	.quality-item {
+		display: grid;
+		grid-template-columns: 200px 1fr;
+		gap: 1rem;
+		padding: 0.5rem;
+		border-bottom: 1px solid #eee;
+	}
+
+	.quality-item:last-child {
+		border-bottom: none;
+	}
+
+	.quality-item strong {
+		color: #333;
+		font-weight: 600;
+	}
+
+	.quality-item span {
+		color: #666;
+		word-break: break-word;
 	}
 </style>

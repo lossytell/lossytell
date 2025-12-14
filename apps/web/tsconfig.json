@@ -4,7 +4,6 @@
 		/* Recommended */
 		"strict": true,
 		"skipLibCheck": true,
-		"types": ["vitest/config"],
 
 		/* Stricter */
 		"noUncheckedIndexedAccess": true
